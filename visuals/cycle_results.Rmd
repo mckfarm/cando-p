@@ -1,0 +1,267 @@
+---
+title: "CANDO+P Reactor In-cycle Visualizations"
+output: html_notebook
+---
+This notebook produces plots and figures for CANDO+P reactor data from in-cycle sampling
+
+Code set up
+```{r setup}
+# working directory - wherever cycle results are saved
+file_path <- "C:/Users/mckyf/Box/CANDO+P and N2O/CANDO+P Reactor 2021/Operation and Logs"
+knitr::opts_knit$set(root.dir = normalizePath(file_path)) # sets all notebook chunks to have this path
+
+# packages
+library(readxl)
+library(ggplot2)
+library(tidyverse)
+```
+
+Data
+```{r}
+# import cycle and hach sensor data
+in_cycle <- "./Performance logs/cycle_results.xlsx"
+in_hach <- "./Sensor logs/Hach/hach_dl_21.6.11.csv"
+in_hach2 <- "./Sensor logs/Hach/hach_dl_21.6.4.csv"
+in_hach3 <- "./Sensor logs/Hach/hach_dl_21.6.18.csv"
+in_hach4 <- "./Sensor logs/Hach/hach_dl_21.7.2.csv"
+
+data_cycle <- read_excel(in_cycle, sheet="master")
+data_hach <- read_csv(in_hach)
+data_hach2 <- read_csv(in_hach2)
+data_hach3 <- read_csv(in_hach3)
+data_hach4 <- read_csv(in_hach4)
+
+# clean up data for merging later
+data_cycle <- subset(data_cycle,select=-c(date,time))
+
+data_hach <- rbind(data_hach,data_hach2,data_hach3,data_hach4)
+data_hach$date_time <- as.POSIXct(data_hach$date_time, tz="GMT", format="%Y/%m/%d %H:%M:%S")
+
+# split data by date
+split_cycle <- split(data_cycle, as.Date(data_cycle$date_time))
+split_hach <- split(data_hach, as.Date(data_hach$date_time))
+```
+
+21-06-30
+cycle4 in code chunk
+```{r}
+# data cleaning
+# filter hach data by cycle time
+cycle4_hach <- split_hach$'2021-06-30' %>%
+  filter(date_time >= as.POSIXct("2021-06-30 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-06-30 14:40:00", tz="GMT"))
+
+# remove phase and hour columns from skalar data
+cycle4_cycle <- subset(split_cycle$`2021-06-30`, select=-c(phase))
+
+# merge cycle sampling and hach data into one dataframe
+cycle_210630 <- merge(cycle4_hach, cycle4_cycle, by="date_time", all=TRUE)
+
+# long format
+cycle_210630_long <- cycle_210630 %>%
+  pivot_longer(!date_time, names_to="parameter", values_to="value")
+
+start_time <- as.POSIXct("2021-06-30 08:23:00", tz="GMT")
+
+# time value
+cycle_210630_long$time_diff <- as.numeric(difftime(cycle_210630_long$date_time, start_time, units="hours"))
+
+# specify what to plot
+params_to_plot <- c("NO2_mgN/L","NO2+NO3_mgN/L","OP_mgP/L")
+params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
+
+# plotting
+
+# all nutrients
+# ggplot(data=subset(cycle_210609_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
+#   geom_point(aes(col=parameter)) +
+#   xlab("Hours") + 
+#   ylab("Concentration - mgN/L or mgP/L") +
+#   ggtitle("In-cycle nutrient sampling 6/9/21") + 
+#   ylim(0,35) +
+#   geom_vline(xintercept=2.1, color="grey") + 
+#   geom_vline(xintercept=5.617, color="grey") + 
+#   theme_classic()
+
+# NO2, PO4
+ggplot(data=subset(cycle_210630_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("Concentration - mgN/L or mgP/L") +
+  ggtitle("In-cycle nutrient sampling 6/30/21") +
+  geom_vline(xintercept=1.78, color="grey") + 
+  geom_vline(xintercept=5.28, color="grey") + 
+  annotate("text", x=0.75, y=63, label="anaerobic") +
+  annotate("text", x=3.5, y=63, label="anoxic") + 
+  annotate("text", x=6, y=63, label="aerobic") +
+  theme_classic()
+
+ggsave("cycle_210630.png", height=4, width=7, units="in", scale=0.8)
+```
+
+
+21-06-16
+```{r}
+# data cleaning
+# filter hach data by cycle time
+cycle3_hach <- split_hach$'2021-06-16' %>%
+  filter(date_time >= as.POSIXct("2021-06-16 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-06-16 15:00:00", tz="GMT"))
+
+# remove phase and hour columns from skalar data
+cycle3_cycle <- subset(split_cycle$`2021-06-16`, select=-c(phase))
+
+# merge cycle sampling and hach data into one dataframe
+cycle_210616 <- merge(cycle3_hach, cycle3_cycle, by="date_time", all=TRUE)
+
+# long format
+cycle_210616_long <- cycle_210616 %>%
+  pivot_longer(!date_time, names_to="parameter", values_to="value")
+
+start_time <- as.POSIXct("2021-06-16 08:23:00", tz="GMT")
+
+# time value
+cycle_210616_long$time_diff <- as.numeric(difftime(cycle_210616_long$date_time, start_time, units="hours"))
+
+# specify what to plot
+params_to_plot <- c("NO2_mgN/L","NO2+NO3_mgN/L","OP_mgP/L")
+params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
+
+# plotting
+
+# all nutrients
+# ggplot(data=subset(cycle_210609_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
+#   geom_point(aes(col=parameter)) +
+#   xlab("Hours") + 
+#   ylab("Concentration - mgN/L or mgP/L") +
+#   ggtitle("In-cycle nutrient sampling 6/9/21") + 
+#   ylim(0,35) +
+#   geom_vline(xintercept=2.1, color="grey") + 
+#   geom_vline(xintercept=5.617, color="grey") + 
+#   theme_classic()
+
+# NO2, PO4
+ggplot(data=subset(cycle_210616_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("Concentration - mgN/L or mgP/L") +
+  ggtitle("In-cycle nutrient sampling 6/16/21") + 
+  ylim(0,35) +
+  geom_vline(xintercept=2.1, color="grey") + 
+  geom_vline(xintercept=5.617, color="grey") + 
+  annotate("text", x=1, y=35, label="anaerobic") +
+  annotate("text", x=3.8, y=35, label="anoxic") + 
+  annotate("text", x=6.5, y=35, label="aerobic") +
+  theme_classic()
+
+```
+
+
+21-06-09
+labeled cycle1 in the code chunk
+```{r}
+# data cleaning
+# filter hach data by cycle time
+cycle1_hach <- split_hach$'2021-06-09' %>%
+  filter(date_time >= as.POSIXct("2021-06-09 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-06-09 15:00:00", tz="GMT"))
+
+# remove phase and hour columns from skalar data
+cycle1_cycle <- subset(split_cycle$`2021-06-09`, select=-c(phase))
+
+# merge cycle sampling and hach data into one dataframe
+cycle_210609 <- merge(cycle1_hach, cycle1_cycle, by="date_time", all=TRUE)
+
+# long format
+cycle_210609_long <- cycle_210609 %>%
+  pivot_longer(!date_time, names_to="parameter", values_to="value")
+
+start_time <- as.POSIXct("2021-06-09 08:23:00", tz="GMT")
+
+# time value
+cycle_210609_long$time_diff <- as.numeric(difftime(cycle_210609_long$date_time, start_time, units="hours"))
+
+# specify what to plot
+params_to_plot <- c("NO2_mgN/L","NO2+NO3_mgN/L","OP_mgP/L")
+params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
+
+# plotting
+
+# all nutrients
+# ggplot(data=subset(cycle_210609_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
+#   geom_point(aes(col=parameter)) +
+#   xlab("Hours") + 
+#   ylab("Concentration - mgN/L or mgP/L") +
+#   ggtitle("In-cycle nutrient sampling 6/9/21") + 
+#   ylim(0,35) +
+#   geom_vline(xintercept=2.1, color="grey") + 
+#   geom_vline(xintercept=5.617, color="grey") + 
+#   theme_classic()
+
+# NO2, PO4
+ggplot(data=subset(cycle_210609_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("Concentration - mgN/L or mgP/L") +
+  ggtitle("In-cycle nutrient sampling 6/9/21") + 
+  ylim(0,35) +
+  geom_vline(xintercept=2.1, color="grey") + 
+  geom_vline(xintercept=5.617, color="grey") + 
+  annotate("text", x=1, y=35, label="anaerobic") +
+  annotate("text", x=3.8, y=35, label="anoxic") + 
+  annotate("text", x=6.5, y=35, label="aerobic") +
+  theme_classic()
+
+```
+
+
+21-06-03 - anaerobic sampling only
+labeled cycle2 in the code chunk
+```{r}
+# data cleaning
+# filter hach data by cycle time
+cycle2_hach <- split_hach$'2021-06-03' %>%
+  filter(date_time >= as.POSIXct("2021-06-03 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-06-03 15:00:00", tz="GMT"))
+
+# remove phase and hour columns from skalar data
+cycle2_cycle <- subset(split_cycle$`2021-06-03`, select=-c(phase))
+
+# merge cycle sampling and hach data into one dataframe
+cycle_210603 <- merge(cycle2_hach, cycle2_cycle, by="date_time", all=TRUE)
+
+# long format
+cycle_210603_long <- cycle_210603 %>%
+  pivot_longer(!date_time, names_to="parameter", values_to="value")
+
+start_time <- as.POSIXct("2021-06-03 08:23:00", tz="GMT")
+
+# time value
+cycle_210603_long$time_diff <- as.numeric(difftime(cycle_210603_long$date_time, start_time, units="hours"))
+
+# specify what to plot
+params_to_plot <- c("NO2_mgN/L","NO2+NO3_mgN/L","OP_mgP/L")
+params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
+
+# plotting
+
+# all nutrients
+# ggplot(data=subset(cycle_210609_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
+#   geom_point(aes(col=parameter)) +
+#   xlab("Hours") + 
+#   ylab("Concentration - mgN/L or mgP/L") +
+#   ggtitle("In-cycle nutrient sampling 6/9/21") + 
+#   ylim(0,35) +
+#   geom_vline(xintercept=2.1, color="grey") + 
+#   geom_vline(xintercept=5.617, color="grey") + 
+#   theme_classic()
+
+# NO2, PO4
+ggplot(data=subset(cycle_210603_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("Concentration - mgN/L or mgP/L") +
+  ggtitle("In-cycle nutrient sampling 6/3/21 - anaerobic phase only") + 
+  ylim(0,30) +
+  xlim(0,2) +
+  theme_classic()
+```
+
+
+
