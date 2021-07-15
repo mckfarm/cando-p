@@ -1,8 +1,7 @@
 '''
 Project: CANDO+P
 Purpose: parsing through probe log files
-Output: summary file of probe outputs
-Date: 5/21/21
+Output: csvs of probe logs
 '''
 # %% set up and function definition
 def hach_sc1000(in_file, out_file, skip_range, header):
@@ -200,21 +199,21 @@ def hach_dl(sc200,sc1000,out_file):
     df = pd.merge(df1000,df200,on="date_time",how="left")
     df.to_csv(out_file,index=False)
 
-# %% 7/2/21 data logs
-out_sc1000_dl = "sc1000_dl_21.7.2.csv"
-out_sc200_dl = "sc200_dl_21.7.2.csv"
+# %% 7/9/21 data logs
+out_sc1000_dl = "sc1000_dl_21.7.9.csv"
+out_sc200_dl = "sc200_dl_21.7.9.csv"
 
-out_sc1000_el = "sc1000_el_21.7.2.csv"
-out_sc200_el = "sc200_el_21.7.2.csv"
+out_sc1000_el = "sc1000_el_21.7.9.csv"
+out_sc200_el = "sc200_el_21.7.9.csv"
 
-out_hach = "hach_dl_21.7.2.csv"
+out_hach = "hach_dl_21.7.9.csv"
 
-dir_sc1000_dl = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.02\sc1000\LDO2_142700000011_0_42_DL*.csv"
-dir_sc1000_el = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.02\sc1000\LDO2_142700000011_0_42_EL*.csv"
+dir_sc1000_dl = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.09\sc1000\LDO2_142700000011_0_42_DL*.csv"
+dir_sc1000_el = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.09\sc1000\LDO2_142700000011_0_42_EL*.csv"
 
-dir_sc200_dl_orp = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.02\sc200\PH_ORP_1406C1046936_0_34_DL_ 210620_ 000000.xml"
-dir_sc200_dl_ph = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.02\sc200\PH_ORP_1406C1046183_0_34_DL_ 210620_ 000000.xml"
-dir_sc200_el = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.02\sc200\SC200_1409C0118449_0_39_EL_ 210620_ 000000.csv"
+dir_sc200_dl_orp = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.09\sc200\PH_ORP_1406C1046936_0_34_DL_ 210627_ 000000.xml"
+dir_sc200_dl_ph = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.09\sc200\PH_ORP_1406C1046183_0_34_DL_ 210627_ 000000.xml"
+dir_sc200_el = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.09\sc200\SC200_1409C0118449_0_39_EL_ 210627_ 000000.csv"
 
 hach_sc1000(dir_sc1000_dl, out_sc1000_dl, 21, ["date_time","do_ppm","temp_c"])
 orp = hach_sc200_orp(dir_sc200_dl_orp)
@@ -225,6 +224,32 @@ hach_sc1000(dir_sc1000_el, out_sc1000_el, 18, ["date_time","event","info1","info
 hach_sc200_el(dir_sc200_el,out_sc200_el)
 
 hach_dl(out_sc200_dl,out_sc1000_dl, out_hach)
+
+# %% 7/2/21 data logs
+# out_sc1000_dl = "sc1000_dl_21.7.2.csv"
+# out_sc200_dl = "sc200_dl_21.7.2.csv"
+
+# out_sc1000_el = "sc1000_el_21.7.2.csv"
+# out_sc200_el = "sc200_el_21.7.2.csv"
+
+# out_hach = "hach_dl_21.7.2.csv"
+
+# dir_sc1000_dl = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.02\sc1000\LDO2_142700000011_0_42_DL*.csv"
+# dir_sc1000_el = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.02\sc1000\LDO2_142700000011_0_42_EL*.csv"
+
+# dir_sc200_dl_orp = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.02\sc200\PH_ORP_1406C1046936_0_34_DL_ 210620_ 000000.xml"
+# dir_sc200_dl_ph = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.02\sc200\PH_ORP_1406C1046183_0_34_DL_ 210620_ 000000.xml"
+# dir_sc200_el = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw reactor logs\Hach\21.07.02\sc200\SC200_1409C0118449_0_39_EL_ 210620_ 000000.csv"
+
+# hach_sc1000(dir_sc1000_dl, out_sc1000_dl, 21, ["date_time","do_ppm","temp_c"])
+# orp = hach_sc200_orp(dir_sc200_dl_orp)
+# ph = hach_sc200_ph(dir_sc200_dl_ph)
+# hach_sc200_dl(ph,orp,out_sc200_dl)
+
+# hach_sc1000(dir_sc1000_el, out_sc1000_el, 18, ["date_time","event","info1","info2"])
+# hach_sc200_el(dir_sc200_el,out_sc200_el)
+
+# hach_dl(out_sc200_dl,out_sc1000_dl, out_hach)
 
 # %% 6/25/21 data logs
 # out_sc1000_dl = "sc1000_dl_21.6.25.csv"

@@ -14,27 +14,23 @@ knitr::opts_knit$set(root.dir = normalizePath(file_path)) # sets all notebook ch
 library(readxl)
 library(ggplot2)
 library(tidyverse)
+
+colors <- c("#F78464","#2E294E","#1B998B","08716A")
 ```
 
-Data
-```{r}
+Data import
+```{r message=FALSE, warning=FALSE}
 # import cycle and hach sensor data
 in_cycle <- "./Performance logs/cycle_results.xlsx"
-in_hach <- "./Sensor logs/Hach/hach_dl_21.6.11.csv"
-in_hach2 <- "./Sensor logs/Hach/hach_dl_21.6.4.csv"
-in_hach3 <- "./Sensor logs/Hach/hach_dl_21.6.18.csv"
-in_hach4 <- "./Sensor logs/Hach/hach_dl_21.7.2.csv"
+in_hach <- Sys.glob(paths="./Sensor logs/Hach/hach_dl*.csv")
 
 data_cycle <- read_excel(in_cycle, sheet="master")
-data_hach <- read_csv(in_hach)
-data_hach2 <- read_csv(in_hach2)
-data_hach3 <- read_csv(in_hach3)
-data_hach4 <- read_csv(in_hach4)
+data_hach <- bind_rows(lapply(in_hach,read.csv))
 
 # clean up data for merging later
 data_cycle <- subset(data_cycle,select=-c(date,time))
 
-data_hach <- rbind(data_hach,data_hach2,data_hach3,data_hach4)
+data_hach <- data_hach[!duplicated(data_hach),]
 data_hach$date_time <- as.POSIXct(data_hach$date_time, tz="GMT", format="%Y/%m/%d %H:%M:%S")
 
 # split data by date
@@ -42,19 +38,114 @@ split_cycle <- split(data_cycle, as.Date(data_cycle$date_time))
 split_hach <- split(data_hach, as.Date(data_hach$date_time))
 ```
 
-21-06-30
-cycle4 in code chunk
+21-07-15
 ```{r}
 # data cleaning
 # filter hach data by cycle time
-cycle4_hach <- split_hach$'2021-06-30' %>%
+
+cycle_hach <- split_hach$'2021-07-14'  %>%
+  filter(date_time >= as.POSIXct("2021-07-14 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-07-14 14:40:00", tz="GMT"))
+
+# remove phase and hour columns from skalar data
+cycle <- subset(split_cycle$`2021-07-14`, select=-c(phase))
+
+# merge cycle sampling and hach data into one dataframe
+cycle_210714 <- merge(cycle_hach, cycle, by="date_time", all=TRUE)
+
+# long format
+cycle_long <- cycle_210714 %>%
+  pivot_longer(!date_time, names_to="parameter", values_to="value")
+
+start_time <- as.POSIXct("2021-07-14 08:23:00", tz="GMT")
+
+# time value
+cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
+
+# specify what to plot
+params_to_plot <- c("NO2_mgN/L","NO3_mgN/L","OP_mgP/L")
+params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
+
+# plotting
+ggplot(data=subset(cycle_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("Concentration - mgN/L or mgP/L") +
+  ylim(0,50) + 
+  ggtitle("In-cycle nutrient sampling 7/14/21") +
+  geom_vline(xintercept=1.78, color="grey") + 
+  geom_vline(xintercept=5.28, color="grey") + 
+  annotate("text", x=0.75, y=45, label="anaerobic") +
+  annotate("text", x=3.5, y=45, label="anoxic") + 
+  annotate("text", x=6, y=45, label="aerobic") +
+  theme_classic() + 
+  scale_color_manual(values=colors) + 
+  scale_shape_manual(values=c(15,17,19))
+
+# ggsave("cycle_210707.png", height=4, width=7, units="in", scale=0.8)
+
+```
+
+
+21-07-07
+```{r}
+# data cleaning
+# filter hach data by cycle time
+
+cycle_hach <- split_hach$'2021-07-07'  %>%
+  filter(date_time >= as.POSIXct("2021-07-07 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-07-07 14:40:00", tz="GMT"))
+
+# remove phase and hour columns from skalar data
+cycle <- subset(split_cycle$`2021-07-07`, select=-c(phase))
+
+# merge cycle sampling and hach data into one dataframe
+cycle_210707 <- merge(cycle_hach, cycle, by="date_time", all=TRUE)
+
+# long format
+cycle_long <- cycle_210707 %>%
+  pivot_longer(!date_time, names_to="parameter", values_to="value")
+
+start_time <- as.POSIXct("2021-07-07 08:23:00", tz="GMT")
+
+# time value
+cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
+
+# specify what to plot
+params_to_plot <- c("NO2_mgN/L","NO3_mgN/L","OP_mgP/L")
+params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
+
+# plotting
+ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("Concentration - mgN/L or mgP/L") +
+  ylim(0,50) + 
+  ggtitle("In-cycle nutrient sampling 7/7/21") +
+  geom_vline(xintercept=1.78, color="grey") + 
+  geom_vline(xintercept=5.28, color="grey") + 
+  annotate("text", x=0.75, y=45, label="anaerobic") +
+  annotate("text", x=3.5, y=45, label="anoxic") + 
+  annotate("text", x=6, y=45, label="aerobic") +
+  theme_classic() + 
+  scale_color_manual(values=colors) + 
+  scale_shape_manual(values=c(15,17,19))
+
+# ggsave("cycle_210707.png", height=4, width=7, units="in", scale=0.8)
+
+```
+
+
+21-06-30
+```{r}
+# data cleaning
+# filter hach data by cycle time
+cycle_hach <- split_hach$'2021-06-30' %>%
   filter(date_time >= as.POSIXct("2021-06-30 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-06-30 14:40:00", tz="GMT"))
 
 # remove phase and hour columns from skalar data
-cycle4_cycle <- subset(split_cycle$`2021-06-30`, select=-c(phase))
+cycle <- subset(split_cycle$`2021-06-30`, select=-c(phase))
 
 # merge cycle sampling and hach data into one dataframe
-cycle_210630 <- merge(cycle4_hach, cycle4_cycle, by="date_time", all=TRUE)
+cycle_210630 <- merge(cycle_hach, cycle, by="date_time", all=TRUE)
 
 # long format
 cycle_210630_long <- cycle_210630 %>%
@@ -70,18 +161,6 @@ params_to_plot <- c("NO2_mgN/L","NO2+NO3_mgN/L","OP_mgP/L")
 params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
 
 # plotting
-
-# all nutrients
-# ggplot(data=subset(cycle_210609_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
-#   geom_point(aes(col=parameter)) +
-#   xlab("Hours") + 
-#   ylab("Concentration - mgN/L or mgP/L") +
-#   ggtitle("In-cycle nutrient sampling 6/9/21") + 
-#   ylim(0,35) +
-#   geom_vline(xintercept=2.1, color="grey") + 
-#   geom_vline(xintercept=5.617, color="grey") + 
-#   theme_classic()
-
 # NO2, PO4
 ggplot(data=subset(cycle_210630_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
   geom_point(aes(col=parameter, shape=parameter)) +
@@ -93,9 +172,11 @@ ggplot(data=subset(cycle_210630_long, parameter %in% params_no_no3), mapping=aes
   annotate("text", x=0.75, y=63, label="anaerobic") +
   annotate("text", x=3.5, y=63, label="anoxic") + 
   annotate("text", x=6, y=63, label="aerobic") +
-  theme_classic()
+  theme_classic() + 
+  scale_color_manual(values=c(colors[1],colors[3])) + 
+  scale_shape_manual(values=c(15,19))
 
-ggsave("cycle_210630.png", height=4, width=7, units="in", scale=0.8)
+# ggsave("cycle_210630.png", height=4, width=7, units="in", scale=0.8)
 ```
 
 
@@ -103,14 +184,14 @@ ggsave("cycle_210630.png", height=4, width=7, units="in", scale=0.8)
 ```{r}
 # data cleaning
 # filter hach data by cycle time
-cycle3_hach <- split_hach$'2021-06-16' %>%
+cycle_hach <- split_hach$'2021-06-16' %>%
   filter(date_time >= as.POSIXct("2021-06-16 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-06-16 15:00:00", tz="GMT"))
 
 # remove phase and hour columns from skalar data
-cycle3_cycle <- subset(split_cycle$`2021-06-16`, select=-c(phase))
+cycle <- subset(split_cycle$`2021-06-16`, select=-c(phase))
 
 # merge cycle sampling and hach data into one dataframe
-cycle_210616 <- merge(cycle3_hach, cycle3_cycle, by="date_time", all=TRUE)
+cycle_210616 <- merge(cycle_hach, cycle, by="date_time", all=TRUE)
 
 # long format
 cycle_210616_long <- cycle_210616 %>%
@@ -126,18 +207,6 @@ params_to_plot <- c("NO2_mgN/L","NO2+NO3_mgN/L","OP_mgP/L")
 params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
 
 # plotting
-
-# all nutrients
-# ggplot(data=subset(cycle_210609_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
-#   geom_point(aes(col=parameter)) +
-#   xlab("Hours") + 
-#   ylab("Concentration - mgN/L or mgP/L") +
-#   ggtitle("In-cycle nutrient sampling 6/9/21") + 
-#   ylim(0,35) +
-#   geom_vline(xintercept=2.1, color="grey") + 
-#   geom_vline(xintercept=5.617, color="grey") + 
-#   theme_classic()
-
 # NO2, PO4
 ggplot(data=subset(cycle_210616_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
   geom_point(aes(col=parameter, shape=parameter)) +
@@ -156,18 +225,17 @@ ggplot(data=subset(cycle_210616_long, parameter %in% params_no_no3), mapping=aes
 
 
 21-06-09
-labeled cycle1 in the code chunk
 ```{r}
 # data cleaning
 # filter hach data by cycle time
-cycle1_hach <- split_hach$'2021-06-09' %>%
+cycle_hach <- split_hach$'2021-06-09' %>%
   filter(date_time >= as.POSIXct("2021-06-09 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-06-09 15:00:00", tz="GMT"))
 
 # remove phase and hour columns from skalar data
-cycle1_cycle <- subset(split_cycle$`2021-06-09`, select=-c(phase))
+cycle <- subset(split_cycle$`2021-06-09`, select=-c(phase))
 
 # merge cycle sampling and hach data into one dataframe
-cycle_210609 <- merge(cycle1_hach, cycle1_cycle, by="date_time", all=TRUE)
+cycle_210609 <- merge(cycle_hach, cycle, by="date_time", all=TRUE)
 
 # long format
 cycle_210609_long <- cycle_210609 %>%
@@ -213,18 +281,17 @@ ggplot(data=subset(cycle_210609_long, parameter %in% params_no_no3), mapping=aes
 
 
 21-06-03 - anaerobic sampling only
-labeled cycle2 in the code chunk
 ```{r}
 # data cleaning
 # filter hach data by cycle time
-cycle2_hach <- split_hach$'2021-06-03' %>%
+cycle_hach <- split_hach$'2021-06-03' %>%
   filter(date_time >= as.POSIXct("2021-06-03 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-06-03 15:00:00", tz="GMT"))
 
 # remove phase and hour columns from skalar data
-cycle2_cycle <- subset(split_cycle$`2021-06-03`, select=-c(phase))
+cycle <- subset(split_cycle$`2021-06-03`, select=-c(phase))
 
 # merge cycle sampling and hach data into one dataframe
-cycle_210603 <- merge(cycle2_hach, cycle2_cycle, by="date_time", all=TRUE)
+cycle_210603 <- merge(cycle_hach, cycle, by="date_time", all=TRUE)
 
 # long format
 cycle_210603_long <- cycle_210603 %>%

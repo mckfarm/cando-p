@@ -1,0 +1,59 @@
+---
+title: "Reactor performance overall"
+output: html_notebook
+---
+
+This notebook processes reactor operation and performance data and produces visuals.
+
+Code set up
+```{r setup}
+# working directory - wherever cycle results are saved
+file_path <- "C:/Users/mckyf/Box/CANDO+P and N2O/CANDO+P Reactor 2021/Operation and Logs"
+knitr::opts_knit$set(root.dir = normalizePath(file_path)) # sets all notebook chunks to have this path
+
+# packages
+library(readxl)
+library(ggplot2)
+library(tidyverse)
+```
+
+Data import
+```{r}
+in_path <- "./Performance logs/performance_data.xlsx"
+
+solids <- read_excel(in_path, sheet="solids")
+cod <- read_excel(in_path, sheet="cod")
+phos <- read_excel(in_path, sheet="op")
+
+```
+
+
+SRT
+concentration solids * volume / effluent solids * flow rate
+Working volume = 11 L
+Flow rate = 5 L/8 hours
+Biomass wasting due to in-cycle sampling - ~20 mL * 25 samples
+```{r}
+# filter data where effluent solids are available
+solids <- na.omit(solids)
+solids$srt <- ((solids$ave_ml*11)-(solids$ave_ml*20/1000*25))/(solids$ave_eff*5/8)/24
+
+```
+
+
+COD
+```{r}
+cod$date <- as.Date(cod$date)
+cod_eff <- cod %>% filter(sample == "eff_am")
+
+ggplot(data=cod_eff, mapping=aes(date,average)) + 
+  geom_point() +
+  xlab("Date") + 
+  ylab("Concentration - mg/L") + 
+  ggtitle("Effluent COD") +
+  ylim(0,30) + 
+  scale_x_date(limits=as.Date(c("2021-06-25","2021-07-09"),format="%Y-%m-%d")) + 
+  theme_classic()
+
+```
+
