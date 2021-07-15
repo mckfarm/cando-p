@@ -12,4 +12,5 @@ float level switch
 hachprobeparse.py - parses Hach probe logs and saves them as csv files
 
 ### Analysis/visualization
-cycleresults.Rmd: produces plots for in-cycle nutrient and carbon storage data
+cycle_results.Rmd: produces plots for in-cycle nutrient and carbon storage data
+reactor_performance.Rmd: daily/weekly reactor performance
