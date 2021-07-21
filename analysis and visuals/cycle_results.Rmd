@@ -15,7 +15,7 @@ library(readxl)
 library(ggplot2)
 library(tidyverse)
 
-colors <- c("#F78464","#2E294E","#1B998B","08716A")
+colors <- c("#AA5042","#2E294E","#1B998B")
 ```
 
 Data import
@@ -38,7 +38,7 @@ split_cycle <- split(data_cycle, as.Date(data_cycle$date_time))
 split_hach <- split(data_hach, as.Date(data_hach$date_time))
 ```
 
-21-07-15
+21-07-14
 ```{r}
 # data cleaning
 # filter hach data by cycle time
@@ -63,13 +63,13 @@ cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, un
 
 # specify what to plot
 params_to_plot <- c("NO2_mgN/L","NO3_mgN/L","OP_mgP/L")
-params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
+params_no_no3 <- c("NO2_mgN/L","OP_mgP/L","do_ppm")
 
 # plotting
 ggplot(data=subset(cycle_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
-  geom_point(aes(col=parameter, shape=parameter)) +
+  geom_point(aes(col=parameter, shape=parameter),alpha=0.7) +
   xlab("Hours") + 
-  ylab("Concentration - mgN/L or mgP/L") +
+  ylab("Concentration mg/L") +
   ylim(0,50) + 
   ggtitle("In-cycle nutrient sampling 7/14/21") +
   geom_vline(xintercept=1.78, color="grey") + 
@@ -78,10 +78,10 @@ ggplot(data=subset(cycle_long, parameter %in% params_no_no3), mapping=aes(time_d
   annotate("text", x=3.5, y=45, label="anoxic") + 
   annotate("text", x=6, y=45, label="aerobic") +
   theme_classic() + 
-  scale_color_manual(values=colors) + 
-  scale_shape_manual(values=c(15,17,19))
+  scale_color_manual(values=colors,labels=c("DO (mgO2/L)","NO2 (mgN/L)","OP (mgP/L)")) + 
+  scale_shape_manual(values=c(19,17,15),labels=c("DO (mgO2/L)","NO2 (mgN/L)","OP (mgP/L)"))
 
-# ggsave("cycle_210707.png", height=4, width=7, units="in", scale=0.8)
+# ggsave("cycle_210714.png", height=4, width=7, units="in", scale=0.8)
 
 ```
 
@@ -111,11 +111,11 @@ cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, un
 
 # specify what to plot
 params_to_plot <- c("NO2_mgN/L","NO3_mgN/L","OP_mgP/L")
-params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
+params_no_no3 <- c("NO2_mgN/L","OP_mgP/L","do_ppm")
 
 # plotting
-ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
-  geom_point(aes(col=parameter, shape=parameter)) +
+ggplot(data=subset(cycle_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter),alpha=0.7) +
   xlab("Hours") + 
   ylab("Concentration - mgN/L or mgP/L") +
   ylim(0,50) + 
@@ -126,10 +126,10 @@ ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_
   annotate("text", x=3.5, y=45, label="anoxic") + 
   annotate("text", x=6, y=45, label="aerobic") +
   theme_classic() + 
-  scale_color_manual(values=colors) + 
-  scale_shape_manual(values=c(15,17,19))
+  scale_color_manual(values=colors,labels=c("DO (mgO2/L)","NO2 (mgN/L)","OP (mgP/L)")) + 
+  scale_shape_manual(values=c(19,17,15),labels=c("DO (mgO2/L)","NO2 (mgN/L)","OP (mgP/L)"))
 
-# ggsave("cycle_210707.png", height=4, width=7, units="in", scale=0.8)
+ggsave("cycle_210707.png", height=4, width=7, units="in", scale=0.8)
 
 ```
 

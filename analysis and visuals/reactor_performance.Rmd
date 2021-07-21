@@ -15,6 +15,7 @@ knitr::opts_knit$set(root.dir = normalizePath(file_path)) # sets all notebook ch
 library(readxl)
 library(ggplot2)
 library(tidyverse)
+library(cowplot)
 ```
 
 Data import
@@ -47,13 +48,34 @@ cod$date <- as.Date(cod$date)
 cod_eff <- cod %>% filter(sample == "eff_am")
 
 ggplot(data=cod_eff, mapping=aes(date,average)) + 
-  geom_point() +
+  geom_point(color="#005200") +
   xlab("Date") + 
   ylab("Concentration - mg/L") + 
-  ggtitle("Effluent COD") +
-  ylim(0,30) + 
-  scale_x_date(limits=as.Date(c("2021-06-25","2021-07-09"),format="%Y-%m-%d")) + 
+  ggtitle("Effluent COD") + 
+  scale_x_date(limits=as.Date(c("2021-05-12","2021-07-16"),format="%Y-%m-%d")) + 
   theme_classic()
 
+# ggsave("eff_cod.png", height=4, width=7, units="in", scale=0.8)
+
 ```
+
+
+OP
+- discard data points are due to samples not being preserved with H2SO4 prior to storage
+```{r}
+phos$date <- as.Date(phos$date)
+phos_eff <- subset(phos,is.na(phos$discard))
+
+ggplot(data=phos_eff, mapping=aes(date,average)) + 
+  geom_point(color="#1B998B",shape=15) +
+  xlab("Date") + 
+  ylab("Concentration - mgP/L") + 
+  ggtitle("Effluent OP") + 
+  scale_x_date(limits=as.Date(c("2021-05-26","2021-07-16"),format="%Y-%m-%d")) + 
+  theme_classic()
+
+# ggsave("eff_op.png", height=4, width=7, units="in", scale=0.8)
+
+```
+
 
