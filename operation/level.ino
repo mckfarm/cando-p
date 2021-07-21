@@ -16,16 +16,13 @@
 //define the input/output pins
 #define FLOAT_SWITCH_PIN 2
 #define LED_PIN 7
-float N2O_READING;
-float N2O_MAX = 50; //max N2O based on sensor head
-float N2O_MIN = 0; //min N2O based on sensor head
 
 //setup runs once
 void setup()
 {
 
   Serial.begin(9600);
-  Serial.println("Time, Water level");
+  //Serial.println("Time, Water level");
 
   //setup input pins for float switch
   //Too use a bare switch with no external pullup resistor, set the pin mode to INPUT_PULLUP to use internal pull resistors. This will invert the standard high/low behavior
