@@ -30,14 +30,22 @@ phos <- read_excel(in_path, sheet="op")
 
 
 SRT
-concentration solids * volume / effluent solids * flow rate
-Working volume = 11 L
-Flow rate = 5 L/8 hours
-Biomass wasting due to in-cycle sampling - ~20 mL * 25 samples
 ```{r}
 # filter data where effluent solids are available
 solids <- na.omit(solids)
-solids$srt <- ((solids$ave_ml*11)-(solids$ave_ml*20/1000*25))/(solids$ave_eff*5/8)/24
+solids$date <- as.Date(solids$date)
+
+plot_srt <- ggplot(data=solids, mapping=aes(date,srt_dynamic)) + 
+  geom_point(shape=17) +
+  xlab("Date") + 
+  ylab("SRT - days") + 
+  ggtitle("Dynamic SRT") + 
+  ylim(0,70) + 
+  scale_x_date(limits=as.Date(c("2021-05-26","2021-07-30"),format="%Y-%m-%d")) + 
+  theme_classic() +
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+ggsave("srt_dyn.png", height=3, width=5, units="in")
 
 ```
 
@@ -47,12 +55,13 @@ COD
 cod$date <- as.Date(cod$date)
 cod_eff <- cod %>% filter(sample == "eff_am")
 
-ggplot(data=cod_eff, mapping=aes(date,average)) + 
+plot_cod <- ggplot(data=cod_eff, mapping=aes(date,average)) + 
   geom_point(color="#005200") +
   xlab("Date") + 
   ylab("Concentration - mg/L") + 
   ggtitle("Effluent COD") + 
-  scale_x_date(limits=as.Date(c("2021-05-12","2021-07-16"),format="%Y-%m-%d")) + 
+  ylim(0,70) + 
+  scale_x_date(limits=as.Date(c("2021-05-26","2021-07-28"),format="%Y-%m-%d")) + 
   theme_classic()
 
 # ggsave("eff_cod.png", height=4, width=7, units="in", scale=0.8)
@@ -66,16 +75,20 @@ OP
 phos$date <- as.Date(phos$date)
 phos_eff <- subset(phos,is.na(phos$discard))
 
-ggplot(data=phos_eff, mapping=aes(date,average)) + 
+plot_phos <- ggplot(data=phos_eff, mapping=aes(date,average)) + 
   geom_point(color="#1B998B",shape=15) +
   xlab("Date") + 
   ylab("Concentration - mgP/L") + 
-  ggtitle("Effluent OP") + 
-  scale_x_date(limits=as.Date(c("2021-05-26","2021-07-16"),format="%Y-%m-%d")) + 
+  ggtitle("Effluent OP") +
+  ylim(0,30) + 
+  scale_x_date(limits=as.Date(c("2021-05-26","2021-07-28"),format="%Y-%m-%d")) + 
   theme_classic()
 
 # ggsave("eff_op.png", height=4, width=7, units="in", scale=0.8)
 
 ```
 
+```{r}
+plot_grid(plot_cod,plot_phos,plot_srt,ncol=1)
+```
 

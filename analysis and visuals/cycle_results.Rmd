@@ -15,7 +15,24 @@ library(readxl)
 library(ggplot2)
 library(tidyverse)
 
-colors <- c("#AA5042","#2E294E","#1B998B")
+# custom scale color and labels so all plots are uniform
+scale_color_cycle <- function(...){
+    ggplot2:::manual_scale(
+        "color", 
+        values = setNames(c("#AA5042","#2E294E","#1B998B","#F6AE2D","#AB99AD","#ADE48B"), c("NO2_mgN/L","NO2+NO3_mgN/L","NO3_mgN/L","NH3_mgN/L","OP_mgP/L","do_ppm")), 
+        labels = setNames(c("NO2 mgN/L","NO2+NO3 mgN/L","NO3 mgN/L","NH3 mgN/L","OP mgP/L","DO mgO2/L"), c("NO2_mgN/L","NO2+NO3_mgN/L","NO3_mgN/L","NH3_mgN/L","OP_mgP/L","do_ppm")),
+        ...
+    )
+  
+}
+
+shape_values = setNames(c(19,18,17,15,16,5), c("NO2_mgN/L","NO2+NO3_mgN/L","NO3_mgN/L","NH3_mgN/L","OP_mgP/L","do_ppm"))
+
+shape_labels = setNames(c("NO2 mgN/L","NO2+NO3 mgN/L","NO3 mgN/L","NH3 mgN/L","OP mgP/L","DO mgO2/L"), c("NO2_mgN/L","NO2+NO3_mgN/L","NO3_mgN/L","NH3_mgN/L","OP_mgP/L","do_ppm"))
+
+# add these to every ggplot:  
+  # scale_color_cycle() + 
+  # scale_shape_manual(values=shape_values,labels=shape_labels)
 ```
 
 Data import
@@ -37,6 +54,116 @@ data_hach$date_time <- as.POSIXct(data_hach$date_time, tz="GMT", format="%Y/%m/%
 split_cycle <- split(data_cycle, as.Date(data_cycle$date_time))
 split_hach <- split(data_hach, as.Date(data_hach$date_time))
 ```
+
+21-07-28
+```{r}
+# data cleaning
+# filter hach data by cycle time
+
+cycle_hach <- split_hach$'2021-07-28'  %>%
+  filter(date_time >= as.POSIXct("2021-07-28 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-07-28 14:40:00", tz="GMT"))
+
+# remove phase and hour columns from skalar data
+cycle <- subset(split_cycle$`2021-07-28`, select=-c(phase))
+
+# merge cycle sampling and hach data into one dataframe
+cycle_210728 <- merge(cycle_hach, cycle, by="date_time", all=TRUE)
+
+# long format
+cycle_long <- cycle_210728 %>%
+  pivot_longer(!date_time, names_to="parameter", values_to="value")
+
+start_time <- as.POSIXct("2021-07-28 08:23:00", tz="GMT")
+
+# time value
+cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
+
+# specify what to plot
+params_to_plot <- c("NO2_mgN/L","OP_mgP/L","NH3_mgN/L")
+params_nitrogen <- c("NO2_mgN/L","NO3_mgN/L","NH3_mgN/L")
+
+# plotting
+ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("Concentration mg/L") +
+  ylim(0,25) + 
+  ggtitle("In-cycle nutrient sampling 7/28/21") +
+  geom_vline(xintercept=1.78, color="grey") + 
+  geom_vline(xintercept=5.28, color="grey") + 
+  annotate("text", x=0.75, y=25, label="anaerobic") +
+  annotate("text", x=3.5, y=25, label="anoxic") + 
+  annotate("text", x=6, y=25, label="aerobic") +
+  theme_classic() + 
+  scale_color_cycle() + 
+  scale_shape_manual(values=shape_values,labels=shape_labels)
+ggsave("cycle_210728.png", height=4, width=7, units="in", scale=0.8)
+
+ggplot(data=subset(cycle_long, parameter %in% params_nitrogen), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("Concentration mgN/L") +
+  ylim(0,6) + 
+  ggtitle("In-cycle nutrient sampling - nitrogen species - 7/28/21") +
+  geom_vline(xintercept=1.78, color="grey") + 
+  geom_vline(xintercept=5.28, color="grey") + 
+  annotate("text", x=0.75, y=6, label="anaerobic") +
+  annotate("text", x=3.5, y=6, label="anoxic") + 
+  annotate("text", x=6, y=6, label="aerobic") +
+  theme_classic() + 
+  scale_color_cycle() + 
+  scale_shape_manual(values=shape_values,labels=shape_labels)
+ggsave("cycle_210728_nitrogen.png", height=4, width=7, units="in", scale=0.8)
+```
+
+
+21-07-21
+```{r}
+# data cleaning
+# filter hach data by cycle time
+
+cycle_hach <- split_hach$'2021-07-21'  %>%
+  filter(date_time >= as.POSIXct("2021-07-21 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-07-21 14:40:00", tz="GMT"))
+
+# remove phase and hour columns from skalar data
+cycle <- subset(split_cycle$`2021-07-21`, select=-c(phase))
+
+# merge cycle sampling and hach data into one dataframe
+cycle_210721 <- merge(cycle_hach, cycle, by="date_time", all=TRUE)
+
+# long format
+cycle_long <- cycle_210721 %>%
+  pivot_longer(!date_time, names_to="parameter", values_to="value")
+
+start_time <- as.POSIXct("2021-07-21 08:23:00", tz="GMT")
+
+# time value
+cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
+
+# specify what to plot
+params_to_plot <- c("NO2_mgN/L","NO3_mgN/L","OP_mgP/L")
+params_no_no3 <- c("NO2_mgN/L","OP_mgP/L","do_ppm")
+
+# plotting
+ggplot(data=subset(cycle_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter),alpha=0.7) +
+  xlab("Hours") + 
+  ylab("Concentration mg/L") +
+  ylim(0,40) + 
+  ggtitle("In-cycle nutrient sampling 7/21/21") +
+  geom_vline(xintercept=1.78, color="grey") + 
+  geom_vline(xintercept=5.28, color="grey") + 
+  annotate("text", x=0.75, y=40, label="anaerobic") +
+  annotate("text", x=3.5, y=40, label="anoxic") + 
+  annotate("text", x=6, y=40, label="aerobic") +
+  theme_classic() + 
+  scale_color_cycle() + 
+  scale_shape_manual(values=shape_values,labels=shape_labels)
+
+# ggsave("cycle_210721.png", height=4, width=7, units="in", scale=0.8)
+
+```
+
 
 21-07-14
 ```{r}
@@ -77,9 +204,9 @@ ggplot(data=subset(cycle_long, parameter %in% params_no_no3), mapping=aes(time_d
   annotate("text", x=0.75, y=45, label="anaerobic") +
   annotate("text", x=3.5, y=45, label="anoxic") + 
   annotate("text", x=6, y=45, label="aerobic") +
-  theme_classic() + 
-  scale_color_manual(values=colors,labels=c("DO (mgO2/L)","NO2 (mgN/L)","OP (mgP/L)")) + 
-  scale_shape_manual(values=c(19,17,15),labels=c("DO (mgO2/L)","NO2 (mgN/L)","OP (mgP/L)"))
+  theme_classic() +
+  scale_color_cycle() + 
+  scale_shape_manual(values=shape_values,labels=shape_labels)
 
 # ggsave("cycle_210714.png", height=4, width=7, units="in", scale=0.8)
 
@@ -125,9 +252,9 @@ ggplot(data=subset(cycle_long, parameter %in% params_no_no3), mapping=aes(time_d
   annotate("text", x=0.75, y=45, label="anaerobic") +
   annotate("text", x=3.5, y=45, label="anoxic") + 
   annotate("text", x=6, y=45, label="aerobic") +
-  theme_classic() + 
-  scale_color_manual(values=colors,labels=c("DO (mgO2/L)","NO2 (mgN/L)","OP (mgP/L)")) + 
-  scale_shape_manual(values=c(19,17,15),labels=c("DO (mgO2/L)","NO2 (mgN/L)","OP (mgP/L)"))
+  theme_classic() +
+  scale_color_cycle() + 
+  scale_shape_manual(values=shape_values,labels=shape_labels)
 
 ggsave("cycle_210707.png", height=4, width=7, units="in", scale=0.8)
 
@@ -172,9 +299,9 @@ ggplot(data=subset(cycle_210630_long, parameter %in% params_no_no3), mapping=aes
   annotate("text", x=0.75, y=63, label="anaerobic") +
   annotate("text", x=3.5, y=63, label="anoxic") + 
   annotate("text", x=6, y=63, label="aerobic") +
-  theme_classic() + 
-  scale_color_manual(values=c(colors[1],colors[3])) + 
-  scale_shape_manual(values=c(15,19))
+  theme_classic()  +
+  scale_color_cycle() + 
+  scale_shape_manual(values=shape_values,labels=shape_labels)
 
 # ggsave("cycle_210630.png", height=4, width=7, units="in", scale=0.8)
 ```
