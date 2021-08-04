@@ -14,13 +14,3 @@ hachprobeparse.py - parses Hach probe logs and saves them as csv files
 ### Analysis/visualization
 cycle_results.Rmd: produces plots for in-cycle nutrient and carbon storage data
 reactor_performance.Rmd: daily/weekly reactor performance
-
-
-### Visual reference
-
-Palette https://coolors.co/aa5042-2e294e-1b998b-005200
-
-aa5042 - DO
-2e294e - nitrite
-1b998b - OP
-005200 - COD
