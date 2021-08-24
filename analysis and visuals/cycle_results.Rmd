@@ -111,7 +111,7 @@ start_time <- as.POSIXct("2021-08-18 08:23:00", tz="GMT")
 cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
 
 # specify what to plot
-params_to_plot <- c("NO2_mgNL","NO3_mgNL","OP_mgPL","NH3_mgNL","N2O_mgNL")
+params_to_plot <- c("NO2_mgNL","NO3_mgNL","OP_mgPL","NH3_mgNL")
 
 # plotting
 
@@ -121,7 +121,7 @@ ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_
   geom_point(aes(col=parameter, shape=parameter)) +
   xlab("Hours") + 
   ylab("Concentration mg/L") +
-  ylim(-5,ylim_val) + 
+  ylim(0,ylim_val) + 
   ggtitle("In-cycle nutrient sampling 8/18/21") +
   geom_vline(xintercept=1.78, color="grey") + 
   geom_vline(xintercept=5.28, color="grey") + 
