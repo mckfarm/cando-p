@@ -41,11 +41,11 @@ plot_srt <- ggplot(data=solids, mapping=aes(date,srt_dynamic)) +
   ylab("SRT - days") + 
   ggtitle("Dynamic SRT") + 
   ylim(0,70) + 
-  scale_x_date(limits=as.Date(c("2021-05-26","2021-07-30"),format="%Y-%m-%d")) + 
+  scale_x_date(limits=as.Date(c("2021-05-26","2021-08-30"),format="%Y-%m-%d")) + 
   theme_classic() +
   theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-ggsave("srt_dyn.png", height=3, width=5, units="in")
+# ggsave("srt_dyn.png", height=3, width=5, units="in")
 
 ```
 
@@ -61,7 +61,7 @@ plot_cod <- ggplot(data=cod_eff, mapping=aes(date,average)) +
   ylab("Concentration - mg/L") + 
   ggtitle("Effluent COD") + 
   ylim(0,70) + 
-  scale_x_date(limits=as.Date(c("2021-05-26","2021-07-28"),format="%Y-%m-%d")) + 
+  scale_x_date(limits=as.Date(c("2021-05-26","2021-08-30"),format="%Y-%m-%d")) + 
   theme_classic()
 
 # ggsave("eff_cod.png", height=4, width=7, units="in", scale=0.8)
@@ -81,7 +81,7 @@ plot_phos <- ggplot(data=phos_eff, mapping=aes(date,average)) +
   ylab("Concentration - mgP/L") + 
   ggtitle("Effluent OP") +
   ylim(0,30) + 
-  scale_x_date(limits=as.Date(c("2021-05-26","2021-07-28"),format="%Y-%m-%d")) + 
+  scale_x_date(limits=as.Date(c("2021-05-26","2021-08-30"),format="%Y-%m-%d")) + 
   theme_classic()
 
 # ggsave("eff_op.png", height=4, width=7, units="in", scale=0.8)

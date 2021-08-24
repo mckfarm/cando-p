@@ -14,21 +14,30 @@ knitr::opts_knit$set(root.dir = normalizePath(file_path)) # sets all notebook ch
 library(readxl)
 library(ggplot2)
 library(tidyverse)
+library(zoo)
 
 # custom scale color and labels so all plots are uniform
 scale_color_cycle <- function(...){
-    ggplot2:::manual_scale(
-        "color", 
-        values = setNames(c("#AA5042","#2E294E","#1B998B","#F6AE2D","#AB99AD","#ADE48B"), c("NO2_mgN/L","NO2+NO3_mgN/L","NO3_mgN/L","NH3_mgN/L","OP_mgP/L","do_ppm")), 
-        labels = setNames(c("NO2 mgN/L","NO2+NO3 mgN/L","NO3 mgN/L","NH3 mgN/L","OP mgP/L","DO mgO2/L"), c("NO2_mgN/L","NO2+NO3_mgN/L","NO3_mgN/L","NH3_mgN/L","OP_mgP/L","do_ppm")),
+  ggplot2:::manual_scale("color", values = setNames(c("#AA5042","#2E294E","#1B998B","#F6AE2D",
+                                  "#AB99AD","#ADE48B","#E5989B","#8D99AE","#FB5012"),
+                                  c("NO2_mgNL","NO2+NO3_mgNL","NO3_mgNL","NH3_mgNL",
+                                  "OP_mgPL","do_ppm","ph","orp","N2O_mgNL")), 
+                                  labels = setNames(c("NO2 mgNL","NO2+NO3 mgNL","NO3 mgNL",
+                                   "NH3 mgNL", "OP mgPL","DO mgO2L","pH","ORP mV","N2O mgNL"),
+                                  c("NO2_mgNL","NO2+NO3_mgNL","NO3_mgNL","NH3_mgNL",
+                                    "OP_mgPL","do_ppm","ph","orp","N2O_mgNL")),
         ...
     )
-  
 }
 
-shape_values = setNames(c(19,18,17,15,16,5), c("NO2_mgN/L","NO2+NO3_mgN/L","NO3_mgN/L","NH3_mgN/L","OP_mgP/L","do_ppm"))
+shape_values = setNames(c(19,18,17,15,16,5,4,3,20),
+                        c("NO2_mgNL","NO2+NO3_mgNL","NO3_mgNL","NH3_mgNL","OP_mgPL",
+                         "do_ppm","ph","orp","N2O_mgNL"))
 
-shape_labels = setNames(c("NO2 mgN/L","NO2+NO3 mgN/L","NO3 mgN/L","NH3 mgN/L","OP mgP/L","DO mgO2/L"), c("NO2_mgN/L","NO2+NO3_mgN/L","NO3_mgN/L","NH3_mgN/L","OP_mgP/L","do_ppm"))
+shape_labels = setNames(c("NO2 mgNL","NO2+NO3 mgNL","NO3 mgNL","NH3 mgNL","OP mgPL",
+                          "DO mgO2L","pH","ORP mV","N2O mgNL"), 
+                        c("NO2_mgNL","NO2+NO3_mgNL","NO3_mgNL","NH3_mgNL","OP_mgPL",
+                          "do_ppm","ph","orp","N2O_mgNL"))
 
 # add these to every ggplot:  
   # scale_color_cycle() + 
@@ -40,26 +49,219 @@ Data import
 # import cycle and hach sensor data
 in_cycle <- "./Performance logs/cycle_results.xlsx"
 in_hach <- Sys.glob(paths="./Sensor logs/Hach/hach_dl*.csv")
+in_n2o <- Sys.glob(paths="./Sensor logs/Unisense/n2o*.xlsx")
 
 data_cycle <- read_excel(in_cycle, sheet="master")
 data_hach <- bind_rows(lapply(in_hach,read.csv))
+data_n2o <- bind_rows(lapply(in_n2o,read_excel))
+
 
 # clean up data for merging later
-data_cycle <- subset(data_cycle,select=-c(date,time))
+data_cycle <- subset(data_cycle,select=-c(date,time)) # remove date and time columns
+data_n2o <- subset(data_n2o,select=-c(date,time))
 
-data_hach <- data_hach[!duplicated(data_hach),]
-data_hach$date_time <- as.POSIXct(data_hach$date_time, tz="GMT", format="%Y/%m/%d %H:%M:%S")
+data_hach <- data_hach[!duplicated(data_hach),] # remove overlapping data
+data_n2o <- data_n2o[!duplicated(data_n2o),]
+
+data_hach$date_time <- as.POSIXct(data_hach$date_time, tz="GMT", format="%Y/%m/%d %H:%M:%S") # date time
+data_n2o$date_time <- as.POSIXct(data_n2o$date_time, tz="GMT", format="%Y/%m/%d %H:%M:%S")
+
+data_n2o$N2O_mgNL_raw <- as.numeric(data_n2o$N2O_mgNL_raw) # numeric
+data_n2o$temp <- as.numeric(data_n2o$temp)
+
+# rolling average n2o
+data_n2o <- data_n2o %>%
+  mutate(N2O_mgNL_temp = N2O_mgNL_raw/(1.033^(21-temp)))
+
+data_n2o <- data_n2o %>% 
+  mutate(N2O_mgNL=rollapply(N2O_mgNL_temp,60,FUN=mean,partial=TRUE))
+
 
 # split data by date
 split_cycle <- split(data_cycle, as.Date(data_cycle$date_time))
 split_hach <- split(data_hach, as.Date(data_hach$date_time))
+split_n2o <- split(data_n2o, as.Date(data_n2o$date_time))
+
 ```
+
+21-08-18
+```{r}
+# data cleaning
+# filter hach data by cycle time
+cycle_hach <- split_hach$'2021-08-18'  %>%
+  filter(date_time >= as.POSIXct("2021-08-18 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-08-18 14:40:00", tz="GMT"))
+
+cycle_n2o <- split_n2o$'2021-08-18'  %>%
+  filter(date_time >= as.POSIXct("2021-08-18 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-08-18 14:40:00", tz="GMT"))
+
+# remove phase and hour columns from skalar data
+cycle <- subset(split_cycle$`2021-08-18`, select=-c(phase))
+
+# merge cycle sampling and hach data into one dataframe
+cycle_210818 <- merge(cycle_hach, cycle, by="date_time", all=TRUE) 
+cycle_210818 <- merge(cycle_210818, cycle_n2o,by="date_time", all=TRUE)
+
+# long format
+cycle_long <- cycle_210818 %>%
+  pivot_longer(!date_time, names_to="parameter", values_to="value")
+
+start_time <- as.POSIXct("2021-08-18 08:23:00", tz="GMT")
+
+# time value
+cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
+
+# specify what to plot
+params_to_plot <- c("NO2_mgNL","NO3_mgNL","OP_mgPL","NH3_mgNL","N2O_mgNL")
+
+# plotting
+
+ylim_val = 25
+
+ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("Concentration mg/L") +
+  ylim(-5,ylim_val) + 
+  ggtitle("In-cycle nutrient sampling 8/18/21") +
+  geom_vline(xintercept=1.78, color="grey") + 
+  geom_vline(xintercept=5.28, color="grey") + 
+  annotate("text", x=0.75, y=ylim_val, label="anaerobic") +
+  annotate("text", x=3.5, y=ylim_val, label="anoxic") + 
+  annotate("text", x=6, y=ylim_val, label="aerobic") +
+  theme_classic() + 
+  scale_color_cycle() + 
+  scale_shape_manual(values=shape_values,labels=shape_labels)
+ggsave("cycle_210818.png", height=4, width=7, units="in", scale=0.8)
+
+```
+
+21-08-10
+```{r}
+# data cleaning
+# filter hach data by cycle time
+cycle_hach <- split_hach$'2021-08-10'  %>%
+  filter(date_time >= as.POSIXct("2021-08-10 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-08-10 14:40:00", tz="GMT"))
+
+# remove phase and hour columns from skalar data
+cycle <- subset(split_cycle$`2021-08-10`, select=-c(phase))
+
+# merge cycle sampling and hach data into one dataframe
+cycle_210810 <- merge(cycle_hach, cycle, by="date_time", all=TRUE)
+
+# long format
+cycle_long <- cycle_210810 %>%
+  pivot_longer(!date_time, names_to="parameter", values_to="value")
+
+start_time <- as.POSIXct("2021-08-10 08:23:00", tz="GMT")
+
+# time value
+cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
+
+# specify what to plot
+params_to_plot <- c("NO2_mgNL","NO3_mgNL","OP_mgPL","NH3_mgNL","do_ppm")
+
+# plotting
+ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("Concentration mg/L") +
+  ylim(0,15) + 
+  ggtitle("In-cycle nutrient sampling 8/10/21") +
+  geom_vline(xintercept=1.78, color="grey") + 
+  geom_vline(xintercept=5.28, color="grey") + 
+  annotate("text", x=0.75, y=15, label="anaerobic") +
+  annotate("text", x=3.5, y=15, label="anoxic") + 
+  annotate("text", x=6, y=15, label="aerobic") +
+  theme_classic() + 
+  scale_color_cycle() + 
+  scale_shape_manual(values=shape_values,labels=shape_labels)
+ggsave("cycle_210810.png", height=4, width=7, units="in", scale=0.8)
+
+ggplot(data=subset(cycle_long, parameter=="orp"), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("ORP mV") +
+  ggtitle("In-cycle nutrient sampling - ORP - 8/10/21") +
+  geom_vline(xintercept=1.78, color="grey") + 
+  geom_vline(xintercept=5.28, color="grey") + 
+  annotate("text", x=0.75, y=10, label="anaerobic") +
+  annotate("text", x=3.5, y=10, label="anoxic") + 
+  annotate("text", x=6, y=10, label="aerobic") +
+  theme_classic() + 
+  scale_color_cycle() + 
+  scale_shape_manual(values=shape_values,labels=shape_labels)
+ggsave("cycle_210810_orp.png", height=4, width=7, units="in", scale=0.8)
+```
+
+
+
+21-08-04
+```{r}
+# data cleaning
+# filter hach data by cycle time
+cycle_hach <- split_hach$'2021-08-04'  %>%
+  filter(date_time >= as.POSIXct("2021-08-04 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-08-04 14:40:00", tz="GMT"))
+
+# remove phase and hour columns from skalar data
+cycle <- subset(split_cycle$`2021-08-04`, select=-c(phase))
+
+# merge cycle sampling and hach data into one dataframe
+cycle_210804 <- merge(cycle_hach, cycle, by="date_time", all=TRUE)
+
+# long format
+cycle_long <- cycle_210804 %>%
+  pivot_longer(!date_time, names_to="parameter", values_to="value")
+
+start_time <- as.POSIXct("2021-08-04 08:23:00", tz="GMT")
+
+# time value
+cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
+
+# specify what to plot
+params_to_plot <- c("NO2_mgNL","NO3_mgNL","OP_mgPL","NH3_mgNL")
+params_nitrogen <- c("NO2_mgNL","NO3_mgNL","NH3_mgNL")
+
+# plotting
+ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("Concentration mg/L") +
+  ylim(0,25) + 
+  ggtitle("In-cycle nutrient sampling 8/04/21") +
+  geom_vline(xintercept=1.78, color="grey") + 
+  geom_vline(xintercept=5.28, color="grey") + 
+  annotate("text", x=0.75, y=25, label="anaerobic") +
+  annotate("text", x=3.5, y=25, label="anoxic") + 
+  annotate("text", x=6, y=25, label="aerobic") +
+  theme_classic() + 
+  scale_color_cycle() + 
+  scale_shape_manual(values=shape_values,labels=shape_labels)
+ggsave("cycle_210804.png", height=4, width=7, units="in", scale=0.8)
+
+ggplot(data=subset(cycle_long, parameter %in% params_nitrogen), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("Concentration mgN/L") +
+  ylim(0,10) + 
+  ggtitle("In-cycle nutrient sampling - nitrogen species - 8/04/21") +
+  geom_vline(xintercept=1.78, color="grey") + 
+  geom_vline(xintercept=5.28, color="grey") + 
+  annotate("text", x=0.75, y=10, label="anaerobic") +
+  annotate("text", x=3.5, y=10, label="anoxic") + 
+  annotate("text", x=6, y=10, label="aerobic") +
+  theme_classic() + 
+  scale_color_cycle() + 
+  scale_shape_manual(values=shape_values,labels=shape_labels)
+ggsave("cycle_210804_nitrogen.png", height=4, width=7, units="in", scale=0.8)
+
+
+```
+
 
 21-07-28
 ```{r}
 # data cleaning
 # filter hach data by cycle time
-
 cycle_hach <- split_hach$'2021-07-28'  %>%
   filter(date_time >= as.POSIXct("2021-07-28 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-07-28 14:40:00", tz="GMT"))
 
@@ -79,8 +281,8 @@ start_time <- as.POSIXct("2021-07-28 08:23:00", tz="GMT")
 cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
 
 # specify what to plot
-params_to_plot <- c("NO2_mgN/L","OP_mgP/L","NH3_mgN/L")
-params_nitrogen <- c("NO2_mgN/L","NO3_mgN/L","NH3_mgN/L")
+params_to_plot <- c("NO2_mgNL","OP_mgPL","NH3_mgNL")
+params_nitrogen <- c("NO2_mgNL","NO3_mgNL","NH3_mgNL")
 
 # plotting
 ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
@@ -114,6 +316,8 @@ ggplot(data=subset(cycle_long, parameter %in% params_nitrogen), mapping=aes(time
   scale_color_cycle() + 
   scale_shape_manual(values=shape_values,labels=shape_labels)
 ggsave("cycle_210728_nitrogen.png", height=4, width=7, units="in", scale=0.8)
+
+
 ```
 
 
@@ -141,11 +345,11 @@ start_time <- as.POSIXct("2021-07-21 08:23:00", tz="GMT")
 cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
 
 # specify what to plot
-params_to_plot <- c("NO2_mgN/L","NO3_mgN/L","OP_mgP/L")
-params_no_no3 <- c("NO2_mgN/L","OP_mgP/L","do_ppm")
+params_to_plot <- c("NO2_mgNL","NO3_mgNL","OP_mgPL")
+params_no_no3 <- c("NO2_mgNL","OP_mgPL","do_ppm")
 
 # plotting
-ggplot(data=subset(cycle_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
+ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
   geom_point(aes(col=parameter, shape=parameter),alpha=0.7) +
   xlab("Hours") + 
   ylab("Concentration mg/L") +
@@ -160,7 +364,7 @@ ggplot(data=subset(cycle_long, parameter %in% params_no_no3), mapping=aes(time_d
   scale_color_cycle() + 
   scale_shape_manual(values=shape_values,labels=shape_labels)
 
-# ggsave("cycle_210721.png", height=4, width=7, units="in", scale=0.8)
+ggsave("cycle_210721.png", height=4, width=7, units="in", scale=0.8)
 
 ```
 
@@ -189,8 +393,8 @@ start_time <- as.POSIXct("2021-07-14 08:23:00", tz="GMT")
 cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
 
 # specify what to plot
-params_to_plot <- c("NO2_mgN/L","NO3_mgN/L","OP_mgP/L")
-params_no_no3 <- c("NO2_mgN/L","OP_mgP/L","do_ppm")
+params_to_plot <- c("NO2_mgNL","NO3_mgNL","OP_mgPL")
+params_no_no3 <- c("NO2_mgNL","OP_mgPL","do_ppm")
 
 # plotting
 ggplot(data=subset(cycle_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
@@ -208,7 +412,7 @@ ggplot(data=subset(cycle_long, parameter %in% params_no_no3), mapping=aes(time_d
   scale_color_cycle() + 
   scale_shape_manual(values=shape_values,labels=shape_labels)
 
-# ggsave("cycle_210714.png", height=4, width=7, units="in", scale=0.8)
+ggsave("cycle_210714.png", height=4, width=7, units="in", scale=0.8)
 
 ```
 
@@ -237,11 +441,11 @@ start_time <- as.POSIXct("2021-07-07 08:23:00", tz="GMT")
 cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
 
 # specify what to plot
-params_to_plot <- c("NO2_mgN/L","NO3_mgN/L","OP_mgP/L")
-params_no_no3 <- c("NO2_mgN/L","OP_mgP/L","do_ppm")
+params_to_plot <- c("NO2_mgNL","NO3_mgNL","OP_mgPL")
+params_no_no3 <- c("NO2_mgNL","OP_mgPL","do_ppm")
 
 # plotting
-ggplot(data=subset(cycle_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
+ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
   geom_point(aes(col=parameter, shape=parameter),alpha=0.7) +
   xlab("Hours") + 
   ylab("Concentration - mgN/L or mgP/L") +
@@ -284,12 +488,12 @@ start_time <- as.POSIXct("2021-06-30 08:23:00", tz="GMT")
 cycle_210630_long$time_diff <- as.numeric(difftime(cycle_210630_long$date_time, start_time, units="hours"))
 
 # specify what to plot
-params_to_plot <- c("NO2_mgN/L","NO2+NO3_mgN/L","OP_mgP/L")
-params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
+params_to_plot <- c("NO2_mgNL","NO2+NO3_mgNL","OP_mgPL")
+params_no_no3 <- c("NO2_mgNL","OP_mgPL")
 
 # plotting
 # NO2, PO4
-ggplot(data=subset(cycle_210630_long, parameter %in% params_no_no3), mapping=aes(time_diff,value)) + 
+ggplot(data=subset(cycle_210630_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
   geom_point(aes(col=parameter, shape=parameter)) +
   xlab("Hours") + 
   ylab("Concentration - mgN/L or mgP/L") +
@@ -303,7 +507,7 @@ ggplot(data=subset(cycle_210630_long, parameter %in% params_no_no3), mapping=aes
   scale_color_cycle() + 
   scale_shape_manual(values=shape_values,labels=shape_labels)
 
-# ggsave("cycle_210630.png", height=4, width=7, units="in", scale=0.8)
+ggsave("cycle_210630.png", height=4, width=7, units="in", scale=0.8)
 ```
 
 
@@ -330,8 +534,8 @@ start_time <- as.POSIXct("2021-06-16 08:23:00", tz="GMT")
 cycle_210616_long$time_diff <- as.numeric(difftime(cycle_210616_long$date_time, start_time, units="hours"))
 
 # specify what to plot
-params_to_plot <- c("NO2_mgN/L","NO2+NO3_mgN/L","OP_mgP/L")
-params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
+params_to_plot <- c("NO2_mgNL","NO2+NO3_mgNL","OP_mgPL")
+params_no_no3 <- c("NO2_mgNL","OP_mgPL")
 
 # plotting
 # NO2, PO4
@@ -374,8 +578,8 @@ start_time <- as.POSIXct("2021-06-09 08:23:00", tz="GMT")
 cycle_210609_long$time_diff <- as.numeric(difftime(cycle_210609_long$date_time, start_time, units="hours"))
 
 # specify what to plot
-params_to_plot <- c("NO2_mgN/L","NO2+NO3_mgN/L","OP_mgP/L")
-params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
+params_to_plot <- c("NO2_mgNL","NO2+NO3_mgNL","OP_mgPL")
+params_no_no3 <- c("NO2_mgNL","OP_mgPL")
 
 # plotting
 
@@ -430,8 +634,8 @@ start_time <- as.POSIXct("2021-06-03 08:23:00", tz="GMT")
 cycle_210603_long$time_diff <- as.numeric(difftime(cycle_210603_long$date_time, start_time, units="hours"))
 
 # specify what to plot
-params_to_plot <- c("NO2_mgN/L","NO2+NO3_mgN/L","OP_mgP/L")
-params_no_no3 <- c("NO2_mgN/L","OP_mgP/L")
+params_to_plot <- c("NO2_mgNL","NO2+NO3_mgNL","OP_mgPL")
+params_no_no3 <- c("NO2_mgNL","OP_mgPL")
 
 # plotting
 
