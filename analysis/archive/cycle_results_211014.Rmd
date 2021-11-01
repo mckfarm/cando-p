@@ -1,7 +1,7 @@
 ---
 title: "CANDO+P Reactor In-cycle Visualizations"
 ---
-This notebook produces plots and figures for CANDO+P reactor data from in-cycle sampling.
+This notebook produces plots and figures for CANDO+P reactor data from in-cycle sampling. Using this as of 10/14/21.
 
 Code set up
 ```{r setup}
@@ -47,7 +47,7 @@ shape_labels = setNames(c("NO2 mgNL","NO2+NO3 mgNL","NO3 mgNL","NH3 mgNL","OP mg
 Data import - cycle data
 ```{r message=FALSE, warning=FALSE}
 # import
-sheet_name = "21.10.27"
+sheet_name = "21.10.05"
 in_skalar <- "./Performance logs/cycle_results.xlsx"
 cycle_skalar <- read_excel(in_skalar, sheet=sheet_name)
 
@@ -61,8 +61,8 @@ Data import - sensor data
 ```{r}
 # import sensor data and clean
 
-in_hach <- Sys.glob(paths="./Sensor logs/Hach/hach_dl_21.10.28.csv")
-in_n2o <- Sys.glob(paths="./Sensor logs/Unisense/n2o_211028.xlsx")
+in_hach <- Sys.glob(paths="./Sensor logs/Hach/sc1000_dl_21.10.14.csv")
+in_n2o <- Sys.glob(paths="./Sensor logs/Unisense/n2o_211014.xlsx")
 
 data_hach <- bind_rows(lapply(in_hach,read.csv))
 data_n2o <- bind_rows(lapply(in_n2o,read_excel,na="NA"))
@@ -91,15 +91,15 @@ split_n2o <- split(data_n2o, as.Date(data_n2o$date_time))
 ```
 
 
-Merging data and plotting - 10/27/21
+Merging data and plotting - 10/13/21
 ```{r}
 # data cleaning
 # filter hach data by cycle time
-cycle_hach <- split_hach$'2021-10-27'  %>%
-  filter(date_time >= as.POSIXct("2021-10-27 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-10-27 14:40:00", tz="GMT"))
+cycle_hach <- split_hach$'2021-10-13'  %>%
+  filter(date_time >= as.POSIXct("2021-10-13 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-10-13 14:40:00", tz="GMT"))
 
-cycle_n2o <- split_n2o$'2021-10-27'  %>%
-  filter(date_time >= as.POSIXct("2021-10-27 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-10-27 14:40:00", tz="GMT"))
+cycle_n2o <- split_n2o$'2021-10-13'  %>%
+  filter(date_time >= as.POSIXct("2021-10-13 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-10-13 14:40:00", tz="GMT"))
 
 
 # merge cycle sampling and hach data into one dataframe
@@ -111,7 +111,7 @@ cycle <- merge(cycle, cycle_n2o, by="date_time", all=TRUE)
 cycle_long <- cycle %>%
   pivot_longer(!date_time, names_to="parameter", values_to="value")
 
-start_time <- as.POSIXct("2021-10-27 08:22:00", tz="GMT")
+start_time <- as.POSIXct("2021-10-13 08:22:00", tz="GMT")
 
 # time value
 cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
@@ -126,7 +126,7 @@ ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_
   xlab("Hours") + 
   ylab("Concentration mg/L") +
   ylim(0,ylim_val) + 
-  ggtitle("In-cycle nutrient sampling 10/27/21") +
+  ggtitle("In-cycle nutrient sampling 10/13/21") +
   geom_vline(xintercept=1.78, color="grey") + 
   geom_vline(xintercept=5.28, color="grey") + 
   annotate("text", x=0.75, y=ylim_val, label="anaerobic") +
@@ -135,8 +135,53 @@ ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_
   theme_classic() + 
   scale_color_cycle() + 
   scale_shape_manual(values=shape_values,labels=shape_labels)
-ggsave("cycle_211027.png", height=4, width=7, units="in", scale=0.8)
+ggsave("cycle_211013.png", height=4, width=7, units="in", scale=0.8)
 ```
 
+10/05/21
+```{r}
+# data cleaning
+# filter hach data by cycle time
+cycle_hach <- split_hach$'2021-10-05'  %>%
+  filter(date_time >= as.POSIXct("2021-10-05 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-10-05 14:40:00", tz="GMT"))
 
+cycle_n2o <- split_n2o$'2021-10-05'  %>%
+  filter(date_time >= as.POSIXct("2021-10-05 08:20:00", tz="GMT") & date_time <= as.POSIXct("2021-10-05 14:40:00", tz="GMT"))
+
+
+# merge cycle sampling and hach data into one dataframe
+cycle <- merge(cycle_hach, cycle_skalar, by="date_time", all=TRUE) 
+cycle <- merge(cycle, cycle_n2o, by="date_time", all=TRUE)
+
+# long format
+cycle_long <- cycle %>%
+  pivot_longer(!date_time, names_to="parameter", values_to="value")
+
+start_time <- as.POSIXct("2021-10-05 08:22:00", tz="GMT")
+
+# time value
+cycle_long$time_diff <- as.numeric(difftime(cycle_long$date_time, start_time, units="hours"))
+
+# specify what to plot
+params_to_plot <- c("NO3_mgNL","OP_mgPL","NO2_mgNL","N2O_mgNL")
+
+# plotting
+ylim_val = 30
+
+ggplot(data=subset(cycle_long, parameter %in% params_to_plot), mapping=aes(time_diff,value)) + 
+  geom_point(aes(col=parameter, shape=parameter)) +
+  xlab("Hours") + 
+  ylab("Concentration mg/L") +
+  ylim(0,ylim_val) + 
+  ggtitle("In-cycle nutrient sampling 10/05/21") +
+  geom_vline(xintercept=1.78, color="grey") + 
+  geom_vline(xintercept=5.28, color="grey") + 
+  annotate("text", x=0.75, y=ylim_val, label="anaerobic") +
+  annotate("text", x=3.5, y=ylim_val, label="anoxic") + 
+  annotate("text", x=6, y=ylim_val, label="aerobic") +
+  theme_classic() + 
+  scale_color_cycle() + 
+  scale_shape_manual(values=shape_values,labels=shape_labels)
+ggsave("cycle_211005.png", height=4, width=7, units="in", scale=0.8)
+```
 
