@@ -12,7 +12,7 @@ library(purrr)
 # data import
 
 setwd("C:/Users/mckyf/Box/CANDO+P and N2O/CANDO+P Reactor 2021/Operation and Logs/Performance logs")
-sheet_name = "master"
+sheet_name <- "master"
 in_skalar <- "cycle_results.xlsx"
 cycle_skalar <- read_excel(in_skalar, sheet=sheet_name)
 start_time <- as.POSIXct("1899-12-31 08:22:00", tz="GMT")

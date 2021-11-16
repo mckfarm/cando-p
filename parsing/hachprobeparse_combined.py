@@ -224,25 +224,23 @@ def hach_dl(sc200,sc1000,out_file):
     df = pd.merge(sc1000,sc200,on="date_time",how="left")
     df.to_csv(out_file,index=False)     
     
-
 # %% 10/28/21 data logs
 
-date = "21.10.28"
+date = "21.11.04"
 
-sc1000_path = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw logs\Hach\21.10.28\sc1000"
-sc200_path = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw logs\Hach\21.10.28\sc200"
+file_path = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw logs\Hach\21.11.04"
 
 out_sc1000_el = "sc1000_el_" + date + ".csv"
 out_sc200_el = "sc200_el_" + date + ".csv"
 
 out_hach = "hach_dl_" + date + ".csv"
 
-dir_sc1000_dl = sc1000_path + "\LDO2_142700000011_0_42_DL*.csv"
-dir_sc1000_el = sc1000_path + "\LDO2_142700000011_0_42_EL*.csv"
+dir_sc1000_dl = file_path + "\LDO2_142700000011_0_42_DL*.csv"
+dir_sc1000_el = file_path + "\LDO2_142700000011_0_42_EL*.csv"
 
-dir_sc200_dl_orp = sc200_path + "\PH_ORP_1406C1046936_0_34_DL_*.xml"
-dir_sc200_dl_ph = sc200_path + "\PH_ORP_1406C1046183_0_34_DL_*.xml"
-dir_sc200_el = sc200_path + "\SC200_1409C0118449_0_39_EL_*.csv"
+dir_sc200_dl_orp = file_path + "\PH_ORP_1406C1046936_0_34_DL_*.xml"
+dir_sc200_dl_ph = file_path + "\PH_ORP_1406C1046183_0_34_DL_*.xml"
+dir_sc200_el = file_path + "\SC200_1409C0118449_0_39_EL_*.csv"
 
 sc1000 = hach_sc1000_dl(dir_sc1000_dl)
 
@@ -254,6 +252,37 @@ hach_dl(sc200, sc1000, out_hach)
 
 sc1000_el = hach_sc1000_el(dir_sc1000_el, out_sc1000_el)
 hach_sc200_el(dir_sc200_el,out_sc200_el)
+
+
+# %% 10/28/21 data logs
+
+# date = "21.10.28"
+
+# sc1000_path = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw logs\Hach\21.10.28\sc1000"
+# sc200_path = r"C:\Users\mckyf\Box\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw logs\Hach\21.10.28\sc200"
+
+# out_sc1000_el = "sc1000_el_" + date + ".csv"
+# out_sc200_el = "sc200_el_" + date + ".csv"
+
+# out_hach = "hach_dl_" + date + ".csv"
+
+# dir_sc1000_dl = sc1000_path + "\LDO2_142700000011_0_42_DL*.csv"
+# dir_sc1000_el = sc1000_path + "\LDO2_142700000011_0_42_EL*.csv"
+
+# dir_sc200_dl_orp = sc200_path + "\PH_ORP_1406C1046936_0_34_DL_*.xml"
+# dir_sc200_dl_ph = sc200_path + "\PH_ORP_1406C1046183_0_34_DL_*.xml"
+# dir_sc200_el = sc200_path + "\SC200_1409C0118449_0_39_EL_*.csv"
+
+# sc1000 = hach_sc1000_dl(dir_sc1000_dl)
+
+# orp = hach_sc200_orp(dir_sc200_dl_orp)
+# ph = hach_sc200_ph(dir_sc200_dl_ph)
+# sc200 = hach_sc200_dl(ph,orp)
+
+# hach_dl(sc200, sc1000, out_hach)
+
+# sc1000_el = hach_sc1000_el(dir_sc1000_el, out_sc1000_el)
+# hach_sc200_el(dir_sc200_el,out_sc200_el)
 
 # %% 9/23/21 data logs
 
