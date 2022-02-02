@@ -224,11 +224,11 @@ def hach_dl(sc200,sc1000,out_file):
     df = pd.merge(sc1000,sc200,on="date_time",how="left")
     df.to_csv(out_file,index=False)     
            
-# %% 22/01/07 data logs
+# %% 22/01/31 data logs
 
-date = "220107"
+date = "220131"
 
-file_path = r"C:\Users\mckyf\OneDrive - Northwestern University\CANDO+P and N2O\CANDO+P Reactor 2021\Operation and Logs\Sensor logs\Raw logs\Hach\22.01.07"
+file_path = r"C:\Users\mckyf\Northwestern University\Wells Research Group - CANDO+P and N2O\CANDO+P Reactor\Operation and Logs\Sensor logs\Raw logs\Hach\22.01.31"
 
 out_sc1000_el = "sc1000_el_" + date + ".csv"
 out_sc200_el = "sc200_el_" + date + ".csv"
