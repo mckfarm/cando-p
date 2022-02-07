@@ -1,7 +1,7 @@
 # CANDO+P in-cycle sampling visualizations
 
 # change these parameters
-start_time <- "2022-02-01 08:20:00"
+start_time <- "2022-02-01 08:22:00"
 end_time <- "2022-02-01 14:20:00"
 file_path <- "C:/Users/mckyf/Northwestern University/Wells Research Group - CANDO+P and N2O/CANDO+P Reactor/Operation and Logs"
 
@@ -87,6 +87,8 @@ cycle_n2o <- data_n2o %>%
 
 # merge cycle sampling and hach data into one dataframe
 cycle_nitrogen <- merge(cycle_nitrogen, cycle_n2o, by="date_time", all=TRUE)
+
+
 # cycle_nitrogen[2:ncol(cycle_nitrogen)] <- cycle_nitrogen[2:ncol(cycle_nitrogen)]*5
 cycle_nitrogen$hour <- as.numeric(difftime(cycle_nitrogen$date_time, 
                                               ymd_hms(start_time, tz="GMT"), units="hours"))
@@ -104,7 +106,7 @@ ggplot() +
   xlab("Hours") +
   ylab("Concentration OP and O2") +
   scale_y_continuous(sec.axis=sec_axis(trans=~ ./5,name="Concentration nitrogen")) +
-  geom_vline(xintercept=1.78, color="grey") +
+  geom_vline(xintercept=1.81, color="grey") +
   geom_vline(xintercept=5.28, color="grey") +
   annotate("text", x=0.75, y=ylim_phos, label="anaerobic") +
   annotate("text", x=3.5, y=ylim_phos, label="anoxic") +
@@ -118,10 +120,10 @@ ggplot() +
   geom_point(data=cycle_nitrogen,mapping=aes(hour,NO3_mgNL),color="#EA3546",shape=17) +
   xlab("Hours") +
   ylab("Concentration mg/L") +
-  geom_vline(xintercept=1.78, color="grey") +
+  geom_vline(xintercept=1.63, color="grey") +
   geom_vline(xintercept=5.28, color="grey") +
   annotate("text", x=0.75, y=ylim_phos, label="anaerobic") +
   annotate("text", x=3.4, y=ylim_phos, label="anoxic") +
   annotate("text", x=5.7, y=ylim_phos, label="aerobic") +
   theme_classic()
-
+ggsave("220201_cycle.tiff",units="px",height=900,width=1500)
