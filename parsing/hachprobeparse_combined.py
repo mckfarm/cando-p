@@ -226,9 +226,9 @@ def hach_dl(sc200,sc1000,out_file):
            
 # %% 22/01/31 data logs
 
-date = "220131"
+date = "220303"
 
-file_path = r"C:\Users\mckyf\Northwestern University\Wells Research Group - CANDO+P and N2O\CANDO+P Reactor\Operation and Logs\Sensor logs\Raw logs\Hach\22.01.31"
+file_path = r"C:\Users\mckyf\Northwestern University\Wells Research Group - CANDO+P and N2O\CANDO+P Reactor\Operation and Logs\Sensor logs\Raw logs\Hach\22.03.03"
 
 out_sc1000_el = "sc1000_el_" + date + ".csv"
 out_sc200_el = "sc200_el_" + date + ".csv"
