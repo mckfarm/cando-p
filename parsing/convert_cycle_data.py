@@ -7,10 +7,10 @@ import pandas as pd
 import os
 import glob
 
+# %% in-cycle sampling
 file_path = r"C:\Users\mckyf\Northwestern University\Wells Research Group - CANDO+P and N2O\CANDO+P Reactor\Operation and Logs\Performance logs"
 os.chdir(file_path)
 
-# %% in-cycle sampling
 data_2021 = "cycle_results_2021.xlsx"
 data_2022 = "cycle_results_2022.xlsx"
 
@@ -20,9 +20,7 @@ df_21 = pd.concat(df_21,ignore_index=True)
 df_22 = pd.read_excel(data_2022, sheet_name=None)
 df_22 = pd.concat(df_22,ignore_index=True)
 
-# export then coerce column names to be the same
 # phosphate, ammonia, nox, nitrite, nitrate, acetate
-
 df_all = pd.concat([df_21,df_22],ignore_index=True)
 
 columns_to_keep = ['date_time', 'phase', 'NO2+NO3_mgNL',
@@ -40,7 +38,6 @@ df_all.to_csv("all_cycle_data.csv",index=False)
 
 
 # %% cod and nutrients
-
 data_daily = "performance_data_raw.xlsx"
 
 df_nutrients = pd.read_excel(data_daily, sheet_name="Nutrients_skalar")
@@ -58,9 +55,7 @@ df_nutrients = pd.read_excel(data_daily, sheet_name="solids")
 df_nutrients["date_time"] = pd.to_datetime(df_nutrients["date_time"], format="%Y-%m-%d %h:%m:%s")
 df_nutrients.to_csv("all_solids.csv",index=False)
 
-
 # %% n2o sensors
-
 file_path = r"C:\Users\mckyf\Northwestern University\Wells Research Group - CANDO+P and N2O\CANDO+P Reactor\Operation and Logs\Sensor logs\Unisense"
 os.chdir(file_path)
 
@@ -72,9 +67,15 @@ for f in glob.glob("*.xlsx"):
 columns_n2o_tokeep = ["date_time","N2O_mgNL_raw","temp"]
 data_n2o = data_n2o[columns_n2o_tokeep]
 data_n2o.columns = ["date_time","n2o","temp"]
+# data_n2o_2021 = data_n2o[data_n2o["date_time"].dt.year == 2021]
+data_n2o_2022 = data_n2o[data_n2o["date_time"].dt.year == 2022]
 
-data_n2o.to_csv("all_n2o.csv",index=False)
+# data_n2o_2021.to_csv("all_n2o_2021.csv",index=False)
+data_n2o_2022.to_csv("all_n2o_2022.csv",index=False)
+
 del data_n2o
+# del data_n2o_2021
+del data_n2o_2022
 del df
 
 # %% hach sensors
