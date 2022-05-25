@@ -1,0 +1,94 @@
+---
+title: "Reactor performance overall"
+output: html_notebook
+---
+
+This notebook processes reactor operation and performance data and produces visuals.
+
+Code set up
+```{r setup}
+# working directory - wherever cycle results are saved
+file_path <- "C:/Users/mckyf/Box/CANDO+P and N2O/CANDO+P Reactor 2021/Operation and Logs"
+knitr::opts_knit$set(root.dir = normalizePath(file_path)) # sets all notebook chunks to have this path
+
+# packages
+library(readxl)
+library(ggplot2)
+library(tidyverse)
+library(cowplot)
+```
+
+Data import
+```{r}
+in_path <- "./Performance logs/performance_data.xlsx"
+
+solids <- read_excel(in_path, sheet="solids")
+cod <- read_excel(in_path, sheet="cod")
+phos <- read_excel(in_path, sheet="op")
+
+```
+
+
+SRT
+```{r}
+# filter data where effluent solids are available
+solids <- na.omit(solids)
+solids$date <- as.Date(solids$date)
+
+plot_srt <- ggplot(data=solids, mapping=aes(date,srt_dynamic)) + 
+  geom_point(shape=17) +
+  xlab("Date") + 
+  ylab("SRT - days") + 
+  ggtitle("Dynamic SRT") + 
+  ylim(0,70) + 
+  scale_x_date(limits=as.Date(c("2021-05-26","2021-08-30"),format="%Y-%m-%d")) + 
+  theme_classic() +
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+# ggsave("srt_dyn.png", height=3, width=5, units="in")
+
+```
+
+
+COD
+```{r}
+cod$date <- as.Date(cod$date)
+cod_eff <- cod %>% filter(sample == "eff_am")
+
+plot_cod <- ggplot(data=cod_eff, mapping=aes(date,average)) + 
+  geom_point(color="#005200") +
+  xlab("Date") + 
+  ylab("Concentration - mg/L") + 
+  ggtitle("Effluent COD") + 
+  ylim(0,70) + 
+  scale_x_date(limits=as.Date(c("2021-05-26","2021-08-30"),format="%Y-%m-%d")) + 
+  theme_classic()
+
+# ggsave("eff_cod.png", height=4, width=7, units="in", scale=0.8)
+
+```
+
+
+OP
+- discard data points are due to samples not being preserved with H2SO4 prior to storage
+```{r}
+phos$date <- as.Date(phos$date)
+phos_eff <- subset(phos,is.na(phos$discard))
+
+plot_phos <- ggplot(data=phos_eff, mapping=aes(date,average)) + 
+  geom_point(color="#1B998B",shape=15) +
+  xlab("Date") + 
+  ylab("Concentration - mgP/L") + 
+  ggtitle("Effluent OP") +
+  ylim(0,30) + 
+  scale_x_date(limits=as.Date(c("2021-05-26","2021-08-30"),format="%Y-%m-%d")) + 
+  theme_classic()
+
+# ggsave("eff_op.png", height=4, width=7, units="in", scale=0.8)
+
+```
+
+```{r}
+plot_grid(plot_cod,plot_phos,plot_srt,ncol=1)
+```
+
